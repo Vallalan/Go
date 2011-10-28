@@ -1,5 +1,10 @@
-
-
+/*   Author: Alan Gieske
+     Project: Go
+     
+     Description: Assignment for programming languages course
+     GoBoard builds the board and is responsible for
+     executing each game step.
+ */
 #include "GoBoard.h"
 
 //function to get a stone pointer
@@ -8,6 +13,7 @@ Stone *makeStone( Player player, int x, int y )
   return new Stone( player, x, y );
 }
 
+//builds a 2d array of stone*
 GoBoard::GoBoard( int width, int height ) 
 {
   //set the board width and height
@@ -32,13 +38,13 @@ GoBoard::~GoBoard()
     {
     for( int y = 0; y<height; y++ ) 
       {
-	delete grid[x][y];             //iterate through the board deleteing all stones
+	delete grid[x][y]; //iterate through the board deleteing all stones
       }
     
-    delete [] grid[x];              //delete each column
+    delete [] grid[x]; //delete each column
     }
   
-  delete [] grid;                  //delete the grid
+  delete [] grid; //delete the grid
 }
 
 int GoBoard::step( Player player ) 
@@ -132,21 +138,29 @@ int GoBoard::step( Player player )
       clearGroup( currPlayer, x, y );
     }
   
+  //clear all our Counted marks
   clearMarks();
+
+  //tell the main loop that the player made a move
   return 1;  
 }
 
 void GoBoard::effectEnemies( Player enemy, int x, int y ) 
 {
   //test for enemies
+  //ugly repeating structure, should be able to break down into a smaller function
 
   //Check West
   if( x-1 >= 0 ) 
     {
-      if( grid[x-1][y]->getPlayer() == enemy ) 
+
+      //see if the stone is an enemy and has NOT been counted yet
+      if( grid[x-1][y]->getPlayer() == enemy && grid[x-1][y]->isCounted() == 0 )
 	{
+	  //check if the group now has no liberties
 	  if( countLiberties( enemy, x-1, y ) == 0 ) 
 	    {
+	      //set all stones to empty
 	      clearGroup( enemy, x-1, y );
 	    }
 	}
@@ -155,7 +169,7 @@ void GoBoard::effectEnemies( Player enemy, int x, int y )
   //Check North
   if( y-1 >= 0 ) 
     {
-      if( grid[x][y-1]->getPlayer() == enemy && grid[x][y-1]->isCounted() == 0 ) 
+      if( grid[x][y-1]->getPlayer() == enemy && grid[x][y-1]->isCounted() == 0 )  
 	{
 	  if( countLiberties( enemy, x, y-1 ) == 0 ) 
 	    {
@@ -200,16 +214,20 @@ int GoBoard::countLiberties( Player player, int x, int y )
   //count EAST
   if( x-1 >= 0 )
     {
+      //check if it's the same player
       if( grid[x-1][y]->getPlayer() == player )
 	{
+	  //Make sure we don't double count
 	  if( grid[x-1][y]->isCounted() == 0 )
 	    {
+	      //find that stones liberties and add it to the total
 	      Liberties += countLiberties( player, x-1, y );
 	    } 
 	}
       else if( grid[x-1][y]->getPlayer() == EMPTY )
 	{
-	  return 1;
+	  //if empty then we found a liberty
+	  Liberties += 1;
 	}
       
     }
@@ -226,7 +244,7 @@ int GoBoard::countLiberties( Player player, int x, int y )
 	}
       else if( grid[x+1][y]->getPlayer() == EMPTY )
 	{
-	  return 1;
+	  Liberties += 1;
 	}
 	
 	
@@ -243,7 +261,7 @@ int GoBoard::countLiberties( Player player, int x, int y )
 	}
       else if( grid[x][y-1]->getPlayer() == EMPTY )
 	{
-	  return 1;
+	  Liberties += 1;
 	}
     }
 
@@ -259,7 +277,7 @@ int GoBoard::countLiberties( Player player, int x, int y )
 	}
       else if( grid[x][y+1]->getPlayer() == EMPTY )
 	{
-	  return 1;
+	  Liberties += 1;
 	}
     }
  
@@ -268,17 +286,24 @@ int GoBoard::countLiberties( Player player, int x, int y )
   return Liberties;
 }
 
+
 void GoBoard::clearGroup( Player player, int x, int y ) 
 {
+  //clear the first node
   grid[x][y]->setPlayer( EMPTY );
+
+  //clear west
   if( x-1 >= 0 ) 
     {
+      //make sure the stone is of the correct player
       if( grid[x-1][y]->getPlayer() == player )
 	{
+	  //clear the stone and any stones of the same player attached to it
 	  clearGroup( player, x-1, y );
 	}
     }
 
+  //clear north
   if( y-1 >= 0 ) 
     {
       if( grid[x][y-1]->getPlayer() == player )
@@ -287,6 +312,7 @@ void GoBoard::clearGroup( Player player, int x, int y )
 	}
     }
 
+  //clear east
   if( x+1 < width ) 
     {
       if( grid[x+1][y]->getPlayer() == player )
@@ -295,6 +321,7 @@ void GoBoard::clearGroup( Player player, int x, int y )
 	}
     }
 
+  //clear south
   if( y+1 < height ) 
     {
       if( grid[x][y+1]->getPlayer() == player )
@@ -306,6 +333,8 @@ void GoBoard::clearGroup( Player player, int x, int y )
 
 void GoBoard::clearMarks()
 {
+
+  //clear all the counted marks on the board
   for( int x = 0; x < width; x++ ) 
     {
       for( int y = 0; y < height; y++ )

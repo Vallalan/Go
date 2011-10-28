@@ -1,14 +1,13 @@
-
+/*   Author: Alan Gieske
+     Project: Go
+     
+     Description: Assignment for programming languages course
+ */
 
 #include<iostream>
 
+//for the stone class and the Player enum type
 #include "Stone.h"
-
-typedef enum Player_t {
-  BLACK = 'B',
-  WHITE = 'W',
-  EMPTY = '.'
-} Player;
 
 class GoBoard 
 {
@@ -16,7 +15,7 @@ class GoBoard
  private:
   int height;
   int width;
-  Stone *** grid; //2d array of pointers to stones
+  Stone *** grid; //2d array of stone pointers
 
  public:
   GoBoard( int width, int height );

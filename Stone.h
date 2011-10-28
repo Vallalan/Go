@@ -1,26 +1,36 @@
+/*   Author: Alan Gieske
+     Project: Go
+     
+     Description: Assignment for programming languages course
+     Stone class header
+ */
 
-#define Empty = '.'
+typedef enum Player_t {
+  BLACK = 'B',
+  WHITE = 'W',
+  EMPTY = '.'
+} Player;
 
 class Stone {
 
  private:
   int x;
   int y;
-  char Player;
+  Player player;
   int Counted; //1 means counted 0 means not counted
 
  public:
   Stone() {Counted = 0;};
   ~Stone() {};
   
-  Stone(char Player, int x, int y);
+  Stone(Player player, int x, int y);
 
   void clearCounted();
   void setCounted();
   int isCounted();
   void setY(int y);
   void setX(int x);
-  void setPlayer(char Player);
+  void setPlayer(Player player);
   char getPlayer();
   int getX();
   int getY();
