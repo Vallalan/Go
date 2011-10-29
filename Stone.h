@@ -8,7 +8,8 @@
 typedef enum Player_t {
   BLACK = 'B',
   WHITE = 'W',
-  EMPTY = '.'
+  EMPTY = '.',
+  DOMI = 'D'
 } Player;
 
 class Stone {

@@ -19,6 +19,7 @@ GoBoard::GoBoard( int width, int height )
   //set the board width and height
   this->width = width;
   this->height = height;
+  emptyOwner = EMPTY;
   
   //make space for the grid
   grid = new Stone **[width];
@@ -249,7 +250,7 @@ int GoBoard::countLiberties( Player player, int x, int y )
 	
 	
     }
-
+  //North
   if( y-1 >= 0 )
     {
       if( grid[x][y-1]->getPlayer() == player )
@@ -264,7 +265,7 @@ int GoBoard::countLiberties( Player player, int x, int y )
 	  Liberties += 1;
 	}
     }
-
+  //South
   if( y+1 < height )
     {
       
@@ -342,6 +343,214 @@ void GoBoard::clearMarks()
 	  grid[x][y]->clearCounted();
 	}
     }
+}
+
+Player GoBoard::scoreArea()
+{
+  int emptySize;
+  int scoreBlack = 0;
+  int scoreWhite = 0;
+  for( int x = 0; x < width; x++ )
+    {
+      for( int y = 0; y < height; y++ )
+	{
+	  if( grid[x][y]->isCounted() == 0 )
+	    {
+	      switch( grid[x][y]->getPlayer() )
+		{
+		case( BLACK ):
+
+		  //find the size of the black group
+		  scoreBlack += getSize( BLACK, x, y );
+		  break;
+		case( WHITE ):
+
+		  //find the size of the white group
+		  scoreWhite += getSize( WHITE, x, y );
+		  break;
+		case( EMPTY ):
+		  emptySize = 0;
+
+		  //find the size of the empty area
+		  emptySize = scoreEmpty( x, y );
+		  
+		  //figure out the owner of the controlled territory
+		  //add it to their score
+		  switch( emptyOwner )
+		    {
+		    case( BLACK ):
+		      scoreBlack += emptySize;
+		      break;
+		    case( WHITE ):
+		      scoreWhite += emptySize;
+		      break;
+		    default:
+		      break;
+		    }
+		  emptyOwner = EMPTY;
+		  break;
+		default:
+		  break;
+		}
+	      //set the grid piece as counted
+	      grid[x][y]->setCounted();
+	    }
+	}
+    }
+
+  //find the bigger number
+  if( scoreWhite > scoreBlack )
+    {
+      return WHITE;
+    }
+  else if( scoreBlack > scoreWhite )
+    {
+      return BLACK;
+    }
+  else
+    {
+      return EMPTY;
+    }
+}
+
+int GoBoard::scoreEmpty( int x, int y )
+{
+  //don't double count
+  grid[x][y]->setCounted();
+  int size = 0;
+
+  //West
+  if( x-1 >= 0 )
+    {
+      if( grid[x-1][y]->isCounted() == 0 )
+	{
+	  //if neighbor is empty keep counting
+	  if( grid[x-1][y]->getPlayer() == EMPTY )
+	    {
+	      size += scoreEmpty( x-1, y );
+	    }
+	  //if we haven't run into a player owned piece yet, or we run into
+	  //the same players piece, that player still owns the group
+	  else if( grid[x-1][y]->getPlayer() == emptyOwner || emptyOwner == EMPTY )
+	    {
+	      emptyOwner = (Player)grid[x-1][y]->getPlayer();
+	    }
+	  else
+	    {
+	      //set the empty group to dead,
+	      //no one gets the points
+	      emptyOwner = DOMI;
+	    }
+	}
+    }
+
+  //East
+  if( x+1 < width )
+    {
+      if( grid[x+1][y]->isCounted() == 0 )
+	{
+	  if( grid[x+1][y]->getPlayer() == EMPTY )
+	    {
+	      size += scoreEmpty( x+1, y );
+	    }
+	  else if( grid[x+1][y]->getPlayer() == emptyOwner || emptyOwner == EMPTY )
+	    {
+	      emptyOwner = (Player)grid[x+1][y]->getPlayer();
+	    }
+	  else
+	    {
+	      emptyOwner = DOMI;
+	    }
+	}
+    }
+
+  //North
+  if( y-1 >= 0 )
+   {
+      if( grid[x][y-1]->isCounted() == 0 )
+	{
+	  if( grid[x][y-1]->getPlayer() == EMPTY )
+	    {
+	      size += scoreEmpty( x, y-1 );
+	    }
+	  else if( grid[x][y-1]->getPlayer() == emptyOwner || emptyOwner == EMPTY )
+	    {
+	      emptyOwner = (Player)grid[x][y-1]->getPlayer();
+	    }
+	  else
+	    {
+	      emptyOwner = DOMI;
+	    }
+	}
+    }
+
+  //South
+  if( y+1 < height )
+    {
+      if( grid[x][y+1]->isCounted() == 0 )
+	{
+	  if( grid[x][y+1]->getPlayer() == EMPTY )
+	    {
+	      size += scoreEmpty( x, y+1 );
+	    }
+	  else if( grid[x][y+1]->getPlayer() == emptyOwner || emptyOwner == EMPTY )
+	    {
+	      emptyOwner = (Player)grid[x][y+1]->getPlayer();
+	    }
+	  else
+	    {
+	      emptyOwner = DOMI;
+	    }
+	}
+    }
+
+  return size + 1;
+}
+
+int GoBoard::getSize( Player player, int x, int y )
+{
+  //don't double count
+  grid[x][y]->setCounted();
+  int size = 0;
+
+  //West
+  if( x-1 >= 0 )
+    {
+      //Check if it's the same player and that we haven't double counted
+      if( grid[x-1][y]->getPlayer() == player && grid[x-1][y]->isCounted() == 0 )
+	{
+	  size += getSize( player, x-1, y );
+	}
+    }
+
+  //East
+  if( x+1 < width )
+    {
+      if( grid[x+1][y]->getPlayer() == player && grid[x+1][y]->isCounted() == 0 )
+	{
+	  size += getSize( player, x+1, y );
+	}
+    }
+
+  //North
+  if( y-1 >= 0 )
+    {
+      if( grid[x][y-1]->getPlayer() == player && grid[x][y-1]->isCounted() == 0 )
+	{
+	  size += getSize( player, x, y-1 );
+	}
+    }
+
+  //South
+  if( y+1 < height )
+    {
+      if( grid[x][y+1]->getPlayer() == player && grid[x][y+1]->isCounted() == 0 )
+	{
+	  size += getSize( player, x, y+1 );
+	}
+    }
+
+  return size + 1;
 }
 
 void GoBoard::printboard() 

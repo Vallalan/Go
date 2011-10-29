@@ -42,7 +42,20 @@ int main() {
     }
   }
 
-  //score and declare winner here
+  Player winner = board.scoreArea();
+
+  switch( winner )
+    {
+    case( BLACK ):
+      std::cout << "The winner is Black!!!" << std::endl;
+      break;
+    case( WHITE ):
+      std::cout << "The winner is White!!!" << std::endl;
+      break;
+    default:
+      std::cout << "The game is a draw!!!" << std::endl;
+      break;
+    }
 
   return 0;
 }
