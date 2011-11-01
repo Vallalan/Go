@@ -1,4 +1,7 @@
 Insert a column and row number when prompted, if a group of pieces is completely surrouned orthogonally by enemies it will be deleted
-objective of the game is to control the most territory.
+objective of the game is to control the most territory. Territory is defined as controlled when it is completely surrounded
+by just a single players pieces, if a group of empty stones is touching both black and white stones, then it is considered
+"Domi" and no one scores the territory.
 
-Currently the board and pieces interact correctly, but there is no scoring and and the input is easy to break.
+Currently the board and pieces interact correctly, There is now 1 type of scoring (Chinese rules Area scoring),
+The input is easy to break, please only input integers.
