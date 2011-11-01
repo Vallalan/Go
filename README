@@ -5,3 +5,4 @@ by just a single players pieces, if a group of empty stones is touching both bla
 
 Currently the board and pieces interact correctly, There is now 1 type of scoring (Chinese rules Area scoring),
 The input is easy to break, please only input integers.
+Allen Test
