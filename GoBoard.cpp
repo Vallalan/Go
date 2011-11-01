@@ -149,60 +149,30 @@ int GoBoard::step( Player player )
 void GoBoard::effectEnemies( Player enemy, int x, int y ) 
 {
   //test for enemies
-  //ugly repeating structure, should be able to break down into a smaller function
-
-  //Check West
-  if( x-1 >= 0 ) 
-    {
-
-      //see if the stone is an enemy and has NOT been counted yet
-      if( grid[x-1][y]->getPlayer() == enemy && grid[x-1][y]->isCounted() == 0 )
-	{
-	  //check if the group now has no liberties
-	  if( countLiberties( enemy, x-1, y ) == 0 ) 
-	    {
-	      //set all stones to empty
-	      clearGroup( enemy, x-1, y );
-	    }
-	}
-    }
   
-  //Check North
-  if( y-1 >= 0 ) 
-    {
-      if( grid[x][y-1]->getPlayer() == enemy && grid[x][y-1]->isCounted() == 0 )  
-	{
-	  if( countLiberties( enemy, x, y-1 ) == 0 ) 
-	    {
-	      clearGroup( enemy, x, y-1 );
-	    }
-	}
-    }
+  //array's to represent orthogonal neighbors
+  int xnew[4] = { x-1, x, x+1, x };
+  int ynew[4] = { y, y-1, y, y+1 };
 
-  //Check East
-  if( x+1 < width ) 
+  //iterate through each neighbor
+  for( int i = 0; i < 4; i++ )
     {
-      if( grid[x+1][y]->getPlayer() == enemy && grid[x+1][y]->isCounted() == 0 ) 
+      //make sure we don't go outside the board
+      if( xnew[i] >= 0 && xnew[i] < width && ynew[i] >= 0 && ynew[i] < height ) 
 	{
-	  if( countLiberties( enemy, x+1, y ) == 0 ) 
+	  
+	  //see if the stone is an enemy and has NOT been counted yet
+	  if( grid[xnew[i]][ynew[i]]->getPlayer() == enemy && grid[xnew[i]][ynew[i]]->isCounted() == 0 )
 	    {
-	      clearGroup( enemy, x+1, y );
+	      //check if the group now has no liberties
+	      if( countLiberties( enemy, xnew[i], ynew[i] ) == 0 ) 
+		{
+		  //set all stones to empty
+		  clearGroup( enemy, xnew[i], ynew[i] );
+		}
 	    }
 	}
     }
-
-  //Check South
-  if( y+1 < height ) 
-    {
-      if( grid[x][y+1]->getPlayer() == enemy && grid[x][y+1]->isCounted() == 0 ) 
-	{
-	  if( countLiberties( enemy, x, y+1 ) == 0 ) 
-	    {
-	      clearGroup( enemy, x, y+1 );
-	    }
-	}
-    }
-  
 }
 
 int GoBoard::countLiberties( Player player, int x, int y ) 
@@ -212,77 +182,34 @@ int GoBoard::countLiberties( Player player, int x, int y )
   //mark that a stone has already been counted
   grid[x][y]->setCounted();
 
-  //count EAST
-  if( x-1 >= 0 )
+  //array's to reresent the orthogonal neighbors
+  int xnew[4] = { x-1, x, x+1, x };
+  int ynew[4] = { y, y-1, y, y+1 };
+
+  //loop through the neighbors
+  for( int i = 0; i < 4; i++ )
     {
-      //check if it's the same player
-      if( grid[x-1][y]->getPlayer() == player )
+      //make certain that we don't attempt to reach outside the board
+      if( xnew[i] >= 0 && xnew[i] < width && ynew[i] >= 0 && ynew[i] < height ) 
 	{
-	  //Make sure we don't double count
-	  if( grid[x-1][y]->isCounted() == 0 )
+	  //check if it's the same player
+	  if( grid[xnew[i]][ynew[i]]->getPlayer() == player )
 	    {
-	      //find that stones liberties and add it to the total
-	      Liberties += countLiberties( player, x-1, y );
-	    } 
-	}
-      else if( grid[x-1][y]->getPlayer() == EMPTY )
-	{
-	  //if empty then we found a liberty
-	  Liberties += 1;
-	}
-      
-    }
-  
-  //Repeat for West
-  if( x+1 < width )
-    {
-      if( grid[x+1][y]->getPlayer() == player )
-	{
-	  if( grid[x+1][y]->isCounted() == 0 )
-	    {
-	      Liberties += countLiberties( player, x+1, y );
+	      //Make sure we don't double count
+	      if( grid[xnew[i]][ynew[i]]->isCounted() == 0 )
+		{
+		  //find that stone's liberties and add it to the total
+		  Liberties += countLiberties( player, xnew[i], ynew[i] );
+		} 
 	    }
-	}
-      else if( grid[x+1][y]->getPlayer() == EMPTY )
-	{
-	  Liberties += 1;
-	}
-	
-	
-    }
-  //North
-  if( y-1 >= 0 )
-    {
-      if( grid[x][y-1]->getPlayer() == player )
-	{
-	  if( grid[x][y-1]->isCounted() == 0 )
+	  else if( grid[xnew[i]][ynew[i]]->getPlayer() == EMPTY )
 	    {
-	      Liberties += countLiberties( player, x, y-1 );
-	    }
-	}
-      else if( grid[x][y-1]->getPlayer() == EMPTY )
-	{
-	  Liberties += 1;
+	      //if empty then we found a liberty
+	      Liberties += 1;
+	    }	  
 	}
     }
-  //South
-  if( y+1 < height )
-    {
-      
-      if(grid[x][y+1]->getPlayer() == player )
-	{
-	  if( grid[x][y+1]->isCounted() == 0 )
-	    {
-	      Liberties += countLiberties( player, x, y+1 );
-	    }
-	}
-      else if( grid[x][y+1]->getPlayer() == EMPTY )
-	{
-	  Liberties += 1;
-	}
-    }
- 
-  
+
   //if Liberties is 0 here, the group is dead
   return Liberties;
 }
@@ -293,41 +220,23 @@ void GoBoard::clearGroup( Player player, int x, int y )
   //clear the first node
   grid[x][y]->setPlayer( EMPTY );
 
-  //clear west
-  if( x-1 >= 0 ) 
-    {
-      //make sure the stone is of the correct player
-      if( grid[x-1][y]->getPlayer() == player )
-	{
-	  //clear the stone and any stones of the same player attached to it
-	  clearGroup( player, x-1, y );
-	}
-    }
+  //array's for the orthogonal neighbors
+  int xnew[4] = { x-1, x, x+1, x };
+  int ynew[4] = { y, y-1, y, y+1 };
 
-  //clear north
-  if( y-1 >= 0 ) 
+  //iterate through each neighbor
+  for( int i = 0; i < 4; i++ )
     {
-      if( grid[x][y-1]->getPlayer() == player )
-	{
-	  clearGroup( player, x, y-1 );
-	}
-    }
 
-  //clear east
-  if( x+1 < width ) 
-    {
-      if( grid[x+1][y]->getPlayer() == player )
+      //make sure we don't go outside the board
+      if( xnew[i] >= 0 && xnew[i] < width && ynew[i] >= 0 && ynew[i] < height ) 
 	{
-	  clearGroup( player, x+1, y );
-	}
-    }
-
-  //clear south
-  if( y+1 < height ) 
-    {
-      if( grid[x][y+1]->getPlayer() == player )
-	{
-	  clearGroup( player, x, y+1 );
+	  //make sure the stone is of the correct player
+	  if( grid[xnew[i]][ynew[i]]->getPlayer() == player )
+	    {
+	      //clear the stone and any stones of the same player attached to it
+	      clearGroup( player, xnew[i], ynew[i] );
+	    }
 	}
     }
 }
@@ -419,91 +328,41 @@ int GoBoard::scoreEmpty( int x, int y )
   grid[x][y]->setCounted();
   int size = 0;
 
-  //West
-  if( x-1 >= 0 )
+  //array's for the orthogonal neighbors
+  int xnew[4] = { x-1, x, x+1, x };
+  int ynew[4] = { y, y-1, y, y+1 };
+
+  //iterate through each neighbor
+  for( int i = 0; i < 4; i++ )
     {
-      if( grid[x-1][y]->isCounted() == 0 )
+
+      //make sure we don't go outside the board
+      if( xnew[i] >= 0 && xnew[i] < width && ynew[i] >= 0 && ynew[i] < height ) 
 	{
-	  //if neighbor is empty keep counting
-	  if( grid[x-1][y]->getPlayer() == EMPTY )
+	  //Don't double count
+	  if( grid[xnew[i]][ynew[i]]->isCounted() == 0 )
 	    {
-	      size += scoreEmpty( x-1, y );
-	    }
-	  //if we haven't run into a player owned piece yet, or we run into
-	  //the same players piece, that player still owns the group
-	  else if( grid[x-1][y]->getPlayer() == emptyOwner || emptyOwner == EMPTY )
-	    {
-	      emptyOwner = (Player)grid[x-1][y]->getPlayer();
-	    }
-	  else
-	    {
-	      //set the empty group to dead,
-	      //no one gets the points
-	      emptyOwner = DOMI;
+	      //if neighbor is empty keep counting
+	      if( grid[xnew[i]][ynew[i]]->getPlayer() == EMPTY )
+		{
+		  size += scoreEmpty( xnew[i], ynew[i] );
+		}
+	      //if we haven't run into a player owned piece yet, or we run into
+	      //the same players piece, that player still owns the group
+	      else if( grid[xnew[i]][ynew[i]]->getPlayer() == emptyOwner || emptyOwner == EMPTY )
+		{
+		  emptyOwner = (Player)grid[xnew[i]][ynew[i]]->getPlayer();
+		}
+	      else
+		{
+		  //set the empty group to dead,
+		  //no one gets the points
+		  emptyOwner = DOMI;
+		}
 	    }
 	}
     }
-
-  //East
-  if( x+1 < width )
-    {
-      if( grid[x+1][y]->isCounted() == 0 )
-	{
-	  if( grid[x+1][y]->getPlayer() == EMPTY )
-	    {
-	      size += scoreEmpty( x+1, y );
-	    }
-	  else if( grid[x+1][y]->getPlayer() == emptyOwner || emptyOwner == EMPTY )
-	    {
-	      emptyOwner = (Player)grid[x+1][y]->getPlayer();
-	    }
-	  else
-	    {
-	      emptyOwner = DOMI;
-	    }
-	}
-    }
-
-  //North
-  if( y-1 >= 0 )
-   {
-      if( grid[x][y-1]->isCounted() == 0 )
-	{
-	  if( grid[x][y-1]->getPlayer() == EMPTY )
-	    {
-	      size += scoreEmpty( x, y-1 );
-	    }
-	  else if( grid[x][y-1]->getPlayer() == emptyOwner || emptyOwner == EMPTY )
-	    {
-	      emptyOwner = (Player)grid[x][y-1]->getPlayer();
-	    }
-	  else
-	    {
-	      emptyOwner = DOMI;
-	    }
-	}
-    }
-
-  //South
-  if( y+1 < height )
-    {
-      if( grid[x][y+1]->isCounted() == 0 )
-	{
-	  if( grid[x][y+1]->getPlayer() == EMPTY )
-	    {
-	      size += scoreEmpty( x, y+1 );
-	    }
-	  else if( grid[x][y+1]->getPlayer() == emptyOwner || emptyOwner == EMPTY )
-	    {
-	      emptyOwner = (Player)grid[x][y+1]->getPlayer();
-	    }
-	  else
-	    {
-	      emptyOwner = DOMI;
-	    }
-	}
-    }
-
+  //return the size plus one for the stone we're on
   return size + 1;
 }
 
@@ -513,40 +372,22 @@ int GoBoard::getSize( Player player, int x, int y )
   grid[x][y]->setCounted();
   int size = 0;
 
-  //West
-  if( x-1 >= 0 )
-    {
-      //Check if it's the same player and that we haven't double counted
-      if( grid[x-1][y]->getPlayer() == player && grid[x-1][y]->isCounted() == 0 )
-	{
-	  size += getSize( player, x-1, y );
-	}
-    }
+  //array's for the orthogonal neighbors
+  int xnew[4] = { x-1, x, x+1, x };
+  int ynew[4] = { y, y-1, y, y+1 };
 
-  //East
-  if( x+1 < width )
+  //iterate through each neighbor
+  for( int i = 0; i < 4; i++ )
     {
-      if( grid[x+1][y]->getPlayer() == player && grid[x+1][y]->isCounted() == 0 )
-	{
-	  size += getSize( player, x+1, y );
-	}
-    }
 
-  //North
-  if( y-1 >= 0 )
-    {
-      if( grid[x][y-1]->getPlayer() == player && grid[x][y-1]->isCounted() == 0 )
+      //make sure we don't go outside the board
+      if( xnew[i] >= 0 && xnew[i] < width && ynew[i] >= 0 && ynew[i] < height ) 
 	{
-	  size += getSize( player, x, y-1 );
-	}
-    }
-
-  //South
-  if( y+1 < height )
-    {
-      if( grid[x][y+1]->getPlayer() == player && grid[x][y+1]->isCounted() == 0 )
-	{
-	  size += getSize( player, x, y+1 );
+	  //Check if it's the same player and that we haven't double counted
+	  if( grid[xnew[i]][ynew[i]]->getPlayer() == player && grid[xnew[i]][ynew[i]]->isCounted() == 0 )
+	    {
+	      size += getSize( player, xnew[i], ynew[i] );
+	    }
 	}
     }
 
