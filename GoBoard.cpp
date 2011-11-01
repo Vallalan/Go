@@ -7,12 +7,6 @@
  */
 #include "GoBoard.h"
 
-//function to get a stone pointer
-Stone *makeStone( Player player, int x, int y ) 
-{
-  return new Stone( player, x, y );
-}
-
 //builds a 2d array of stone*
 GoBoard::GoBoard( int width, int height ) 
 {
@@ -28,7 +22,7 @@ GoBoard::GoBoard( int width, int height )
       grid[x] = new Stone *[height];
       for( int y = 0; y < height; y++ ) 
 	{
-	  grid[x][y] = makeStone( EMPTY, x, y );
+	  grid[x][y] = new Stone( EMPTY, x, y );
 	}
     }
 }
@@ -99,7 +93,7 @@ int GoBoard::step( Player player )
       }
     while( 1 ) 
       {
-	std::cout << "Please enter the desired row, or enter -1 to pass ";
+	std::cout << "Please enter the desired row, or enter -1 to pass " << std::endl;
 	std::cin >> y;
       if( y == -1 ) 
 	{
