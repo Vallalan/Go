@@ -1,4 +1,5 @@
 /*   Author: Alan Gieske
+             Allen Hsia
      Project: Go
      
      Description: Assignment for programming languages course
@@ -48,6 +49,7 @@ int GoBoard::step( Player player )
   Player Enemy;
   int x, y;
   Stone *currStone;
+  Group playerGroup;
   std::string playerName;
 
   //set player name as string
@@ -71,7 +73,6 @@ int GoBoard::step( Player player )
     }
 
   //get move from user
-  //ugly, ugly, code
   while( 1 )
     {
     while( 1 ) 
@@ -119,16 +120,24 @@ int GoBoard::step( Player player )
       }
     }
 
-
-  
   //set piece
   currStone->setPlayer( currPlayer );
+
+  
+  
+  
 
   //test and possibly kill enemies
   effectEnemies( Enemy, x, y );
 
+  playerGroup.size = 0;
+  playerGroup.liberties = 0;
+  playerGroup.player = currPlayer;
+  playerGroup.owner = (Player)EMPTY;
+  playerGroup = getGroup( x, y, playerGroup );
+  std::cout<<"Size: "<<playerGroup.size<<" Liberties: "<<playerGroup.liberties<<" Player: "<<playerGroup.player<<" Owner: "<<playerGroup.owner<<std::endl;
   //test if player killed themselves
-  if( countLiberties( currPlayer, x, y ) == 0 )
+  if( playerGroup.liberties == 0 )
     {
       clearGroup( currPlayer, x, y );
     }
@@ -140,10 +149,52 @@ int GoBoard::step( Player player )
   return 1;  
 }
 
-void GoBoard::effectEnemies( Player enemy, int x, int y ) 
+/*
+  Determines if a move is valid
+  
+  param: int x - the desired column
+  param: int y - the desired row
+
+  return: Bool - whether the move is valid
+*/
+bool GoBoard::isOnBoard( int x, int y )
+{
+  // check that move is inside the board space
+  if( x >= 0 && x < width && y >= 0 && y < height )
+    {
+      return true;
+    }
+    
+    return false;
+}
+
+/*
+  Probes adjecent stones and determines if any neighbor groups
+  no longer have liberties
+
+  param enemy: the color of the opponents stones
+  param x, y: coordinates of the newly placed stone
+
+  return Bool, KOflag, returns true if a state of KO may be possible
+  this flag, combined with the flag in the main step function, determines
+  if there is in fact a KO state.
+*/
+bool GoBoard::effectEnemies( Player enemy, int x, int y ) 
 {
   //test for enemies
   
+  //flags to see if a state of KO may be possible
+  int killSize = 0; //size of last gorup killed, used to test for KO
+  int numKilled = 0; //groups killed, used to test for KO
+
+  //create a group to be reused to test all enemies
+  Group enemyGroup;
+  enemyGroup.player = enemy;
+  enemyGroup.owner = (Player)EMPTY;
+  enemyGroup.size = 0;
+  enemyGroup.liberties = 0;
+  
+
   //array's to represent orthogonal neighbors
   int xnew[4] = { x-1, x, x+1, x };
   int ynew[4] = { y, y-1, y, y+1 };
@@ -152,60 +203,35 @@ void GoBoard::effectEnemies( Player enemy, int x, int y )
   for( int i = 0; i < 4; i++ )
     {
       //make sure we don't go outside the board
-      if( xnew[i] >= 0 && xnew[i] < width && ynew[i] >= 0 && ynew[i] < height ) 
+      if( isOnBoard( xnew[i], ynew[i] ))
 	{
 	  
 	  //see if the stone is an enemy and has NOT been counted yet
-	  if( grid[xnew[i]][ynew[i]]->getPlayer() == enemy && grid[xnew[i]][ynew[i]]->isCounted() == 0 )
+	  if( grid[xnew[i]][ynew[i]]->isPlayer( enemy ) && 
+	      !grid[xnew[i]][ynew[i]]->isCounted() )
 	    {
-	      //check if the group now has no liberties
-	      if( countLiberties( enemy, xnew[i], ynew[i] ) == 0 ) 
+	      enemyGroup.size = 0;
+	      enemyGroup.liberties = 0;
+	      enemyGroup = getGroup( xnew[i], ynew[i], enemyGroup );
+	      if( enemyGroup.liberties == 0 ) 
 		{
+		  //set the killSize when a group is killed
+		  killSize = enemyGroup.size;
+		  numKilled += 1;
 		  //set all stones to empty
 		  clearGroup( enemy, xnew[i], ynew[i] );
 		}
 	    }
 	}
     }
-}
 
-int GoBoard::countLiberties( Player player, int x, int y ) 
-{
-  int Liberties = 0;
-  
-  //mark that a stone has already been counted
-  grid[x][y]->setCounted();
-
-  //array's to reresent the orthogonal neighbors
-  int xnew[4] = { x-1, x, x+1, x };
-  int ynew[4] = { y, y-1, y, y+1 };
-
-  //loop through the neighbors
-  for( int i = 0; i < 4; i++ )
+  //if a single group of size 1 is killed then we need to return that a
+  //KO may be possible depending on the size of the player group
+  if( numKilled == 1 && killSize == 1)
     {
-      //make certain that we don't attempt to reach outside the board
-      if( xnew[i] >= 0 && xnew[i] < width && ynew[i] >= 0 && ynew[i] < height ) 
-	{
-	  //check if it's the same player
-	  if( grid[xnew[i]][ynew[i]]->getPlayer() == player )
-	    {
-	      //Make sure we don't double count
-	      if( grid[xnew[i]][ynew[i]]->isCounted() == 0 )
-		{
-		  //find that stone's liberties and add it to the total
-		  Liberties += countLiberties( player, xnew[i], ynew[i] );
-		} 
-	    }
-	  else if( grid[xnew[i]][ynew[i]]->getPlayer() == EMPTY )
-	    {
-	      //if empty then we found a liberty
-	      Liberties += 1;
-	    }	  
-	}
+      return true;
     }
-
-  //if Liberties is 0 here, the group is dead
-  return Liberties;
+  return false;
 }
 
 
@@ -257,7 +283,7 @@ Player GoBoard::scoreArea()
     {
       for( int y = 0; y < height; y++ )
 	{
-	  if( grid[x][y]->isCounted() == 0 )
+	  if( !grid[x][y]->isCounted() )
 	    {
 	      switch( grid[x][y]->getPlayer() )
 		{
@@ -334,7 +360,7 @@ int GoBoard::scoreEmpty( int x, int y )
       if( xnew[i] >= 0 && xnew[i] < width && ynew[i] >= 0 && ynew[i] < height ) 
 	{
 	  //Don't double count
-	  if( grid[xnew[i]][ynew[i]]->isCounted() == 0 )
+	  if( !grid[xnew[i]][ynew[i]]->isCounted() )
 	    {
 	      //if neighbor is empty keep counting
 	      if( grid[xnew[i]][ynew[i]]->getPlayer() == EMPTY )
@@ -360,34 +386,6 @@ int GoBoard::scoreEmpty( int x, int y )
   return size + 1;
 }
 
-int GoBoard::getSize( Player player, int x, int y )
-{
-  //don't double count
-  grid[x][y]->setCounted();
-  int size = 0;
-
-  //array's for the orthogonal neighbors
-  int xnew[4] = { x-1, x, x+1, x };
-  int ynew[4] = { y, y-1, y, y+1 };
-
-  //iterate through each neighbor
-  for( int i = 0; i < 4; i++ )
-    {
-
-      //make sure we don't go outside the board
-      if( xnew[i] >= 0 && xnew[i] < width && ynew[i] >= 0 && ynew[i] < height ) 
-	{
-	  //Check if it's the same player and that we haven't double counted
-	  if( grid[xnew[i]][ynew[i]]->getPlayer() == player && grid[xnew[i]][ynew[i]]->isCounted() == 0 )
-	    {
-	      size += getSize( player, xnew[i], ynew[i] );
-	    }
-	}
-    }
-
-  return size + 1;
-}
-
 void GoBoard::printboard() 
 {
   std::cout << "  0 1 2 3 4 5 6 7 8 9" << std::endl;
@@ -403,5 +401,74 @@ void GoBoard::printboard()
       std::cout << std::endl;
     }
 }
-	  
+	
+/*
+  Counts the all neighbors of a specific player around the
+  provided stone.
+
+  param target: the player type we are counting
+  param x and y: the grid coordinates of the center stone
+
+  return count: the number of neighbors of target color
+*/
+int GoBoard::countNeighbors( Player target, int x, int y )
+{
+  int count = 0;
+  int xnew[4] = { x-1, x, x+1, x };
+  int ynew[4] = { y, y-1, y, y+1 };
+
+  for( int i = 0; i<4; i++ )
+    {
+      if( isOnBoard( xnew[i], ynew[i] ))
+	{
+	  if( grid[xnew[i]][ynew[i]]->getPlayer() == target)
+	    {
+	      count += 1;
+	    }
+	}
+    }
+  return count;
+}
+
+Group GoBoard::getGroup( int x, int y, Group currGroup )
+{
+  //coordinates of all neighbor stones
+  int xnew[] = { x-1, x, x+1, x };
+  int ynew[] = { y, y-1, y, y+1 };
+
+  //set as counted to prevent double count
+  grid[x][y]->setCounted();
+
+  //iterate through every neighbor
+  for( int i = 0; i < 4; i++ )
+    {
+      //verify we're on the board
+      if( isOnBoard( xnew[i], ynew[i] ))
+	{
+	  //verify we have the same player
+	  if( grid[xnew[i]][ynew[i]]->isPlayer(currGroup.player))
+	    {
+	      //check if already counted
+	      if( !grid[xnew[i]][ynew[i]]->isCounted())
+		{
+		  currGroup = getGroup( xnew[i], ynew[i], currGroup );
+		}
+	    }
+	  else if( currGroup.owner == EMPTY || 
+		   grid[xnew[i]][ynew[i]]->isPlayer(currGroup.owner))
+	    {
+	      currGroup.owner = (Player)grid[xnew[i]][ynew[i]]->getPlayer();
+	    }
+	  else
+	    {
+	      currGroup.owner = (Player)DOMI;
+	    }
+	}
+    }
+
+  currGroup.size += 1;
+  currGroup.liberties += countNeighbors( EMPTY, x, y );
+  std::cout<<"x: "<< x <<" y: "<< y << " lib: "<<countNeighbors( EMPTY, x, y )<<std::endl;
+  return currGroup;
+}
   

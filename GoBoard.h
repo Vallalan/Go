@@ -1,4 +1,5 @@
 /*   Author: Alan Gieske
+             (Allen Hsia)
      Project: Go
      
      Description: Assignment for programming languages course
@@ -8,6 +9,14 @@
 
 //for the stone class and the Player enum type
 #include "Stone.h"
+
+typedef struct Group_t{
+  int size;
+  int liberties;
+  Player player;
+  Player owner;
+} Group;
+
 
 class GoBoard 
 {
@@ -28,10 +37,13 @@ class GoBoard
   Player scoreArea();
 
  private:
-  void effectEnemies( Player enemy, int x, int y );
+  bool isOnBoard( int x, int y );
+  int countNeighbors( Player target, int x, int y );
+  bool effectEnemies( Player enemy, int x, int y );
   int countLiberties( Player player, int x, int y );
   void clearMarks();
   void clearGroup( Player player, int x, int y );
   int getSize( Player player, int x, int y );
   int scoreEmpty( int x, int y );
+  Group getGroup( int x, int y, Group currGroup );
 };

@@ -1,4 +1,14 @@
-Insert a column and row number when prompted, if a group of pieces is completely surrouned orthogonally by enemies it will be deleted
-objective of the game is to control the most territory.
+Group members: Alan Gieske, Allen Hsia
 
-Currently the board and pieces interact correctly, but there is no scoring and and the input is easy to break.
+Makefile commands:
+"make Go" - builds the console version of the game
+"make gui" - makes a basic gtk window pop up
+
+input a column and row number when prompted, if a group of pieces is completely surrouned orthogonally by enemies it will be deleted
+objective of the game is to control the most territory(Have the most empty pieces surrounded only by pieces of your color).
+
+Area Scoring: 1 point for each piece on the board, 1 point for each empty space controlled.
+
+Territory Scoring: 1 point for each enemy piece captured, 1 point for each empty space controlled.
+
+Currently the board and pieces interact correctly and Area Type scoring is working correctly, the input is easy to break and cause infinite loops.

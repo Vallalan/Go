@@ -1,4 +1,5 @@
 /*    Authort: Alan Gieske
+               (Allen Hsia)
       Project: Go
 
       Description: Assignment for programming languages class

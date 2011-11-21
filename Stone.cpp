@@ -1,4 +1,5 @@
 /*   Author: Alan Gieske
+             (Allen Hsia)
      Project: Go
      
      Description: Assignment for programming languages course
@@ -36,6 +37,15 @@ char Stone::getPlayer()
   return player;
 }
 
+bool Stone::isPlayer( Player target )
+{
+  if( target == player )
+    {
+      return true;
+    }
+  return false;
+}
+
 int Stone::getX() 
 {
   return x;
@@ -49,15 +59,15 @@ int Stone::getY()
 //set up to only allow boolean access to Counted variable
 void Stone::setCounted() 
 {
-  Counted = 1;
+  Counted = true;
 }
 
 void Stone::clearCounted() 
 {
-  Counted = 0;
+  Counted = false;
 }
 
-int Stone::isCounted() 
+bool Stone::isCounted() 
 {
   return Counted;
 }
