@@ -14,7 +14,7 @@ GoBoard::GoBoard( int width, int height )
   //set the board width and height
   this->width = width;
   this->height = height;
-  emptyOwner = EMPTY;
+ 
   
   //make space for the grid
   grid = new Stone **[width];
@@ -276,53 +276,54 @@ void GoBoard::clearMarks()
 
 Player GoBoard::scoreArea()
 {
-  int emptySize;
+  Group currGroup;
   int scoreBlack = 0;
   int scoreWhite = 0;
   for( int x = 0; x < width; x++ )
     {
       for( int y = 0; y < height; y++ )
 	{
+	  currGroup.size = 0;
+	  currGroup.liberties = 0;
+	  currGroup.owner = EMPTY;
 	  if( !grid[x][y]->isCounted() )
 	    {
 	      switch( grid[x][y]->getPlayer() )
 		{
 		case( BLACK ):
-
-		  //find the size of the black group
-		  scoreBlack += getSize( BLACK, x, y );
+		  currGroup.player = (Player)BLACK;
+		  currGroup = getGroup( x, y, currGroup );
+		  scoreBlack += currGroup.size;
 		  break;
 		case( WHITE ):
-
-		  //find the size of the white group
-		  scoreWhite += getSize( WHITE, x, y );
+		  currGroup.player = (Player)WHITE;
+		  currGroup = getGroup( x, y, currGroup );
+		  scoreWhite += currGroup.size;
 		  break;
 		case( EMPTY ):
-		  emptySize = 0;
-
+		  currGroup.player = (Player)EMPTY;
+		  currGroup.owner = (Player)EMPTY;
+		  currGroup = getGroup( x, y, currGroup);
 		  //find the size of the empty area
-		  emptySize = scoreEmpty( x, y );
+		  
 		  
 		  //figure out the owner of the controlled territory
 		  //add it to their score
-		  switch( emptyOwner )
+		  switch( currGroup.owner )
 		    {
 		    case( BLACK ):
-		      scoreBlack += emptySize;
+		      scoreBlack += currGroup.size;
 		      break;
 		    case( WHITE ):
-		      scoreWhite += emptySize;
+		      scoreWhite += currGroup.size;
 		      break;
 		    default:
 		      break;
-		    }
-		  emptyOwner = EMPTY;
+		    }		  
 		  break;
 		default:
 		  break;
 		}
-	      //set the grid piece as counted
-	      grid[x][y]->setCounted();
 	    }
 	}
     }
@@ -340,50 +341,6 @@ Player GoBoard::scoreArea()
     {
       return EMPTY;
     }
-}
-
-int GoBoard::scoreEmpty( int x, int y )
-{
-  //don't double count
-  grid[x][y]->setCounted();
-  int size = 0;
-
-  //array's for the orthogonal neighbors
-  int xnew[4] = { x-1, x, x+1, x };
-  int ynew[4] = { y, y-1, y, y+1 };
-
-  //iterate through each neighbor
-  for( int i = 0; i < 4; i++ )
-    {
-
-      //make sure we don't go outside the board
-      if( xnew[i] >= 0 && xnew[i] < width && ynew[i] >= 0 && ynew[i] < height ) 
-	{
-	  //Don't double count
-	  if( !grid[xnew[i]][ynew[i]]->isCounted() )
-	    {
-	      //if neighbor is empty keep counting
-	      if( grid[xnew[i]][ynew[i]]->getPlayer() == EMPTY )
-		{
-		  size += scoreEmpty( xnew[i], ynew[i] );
-		}
-	      //if we haven't run into a player owned piece yet, or we run into
-	      //the same players piece, that player still owns the group
-	      else if( grid[xnew[i]][ynew[i]]->getPlayer() == emptyOwner || emptyOwner == EMPTY )
-		{
-		  emptyOwner = (Player)grid[xnew[i]][ynew[i]]->getPlayer();
-		}
-	      else
-		{
-		  //set the empty group to dead,
-		  //no one gets the points
-		  emptyOwner = DOMI;
-		}
-	    }
-	}
-    }
-  //return the size plus one for the stone we're on
-  return size + 1;
 }
 
 void GoBoard::printboard() 

@@ -24,7 +24,6 @@ class GoBoard
  private:
   int height;
   int width;
-  Player emptyOwner;
   Stone *** grid; //2d array of stone pointers
 
  public:
@@ -40,10 +39,10 @@ class GoBoard
   bool isOnBoard( int x, int y );
   int countNeighbors( Player target, int x, int y );
   bool effectEnemies( Player enemy, int x, int y );
-  int countLiberties( Player player, int x, int y );
+  
   void clearMarks();
   void clearGroup( Player player, int x, int y );
-  int getSize( Player player, int x, int y );
-  int scoreEmpty( int x, int y );
+  
+  
   Group getGroup( int x, int y, Group currGroup );
 };
