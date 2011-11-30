@@ -25,6 +25,7 @@ class GoBoard
   int height;
   int width;
   Stone *** grid; //2d array of stone pointers
+  
 
  public:
   GoBoard( int width, int height );
@@ -34,15 +35,16 @@ class GoBoard
   void printboard();
   int step(Player player);
   Player scoreArea();
-
+  Player scoreTerritory();
+  bool isValidMove( int x, int y );
  private:
+  
   bool isOnBoard( int x, int y );
+  bool isPlayer( Player target, int x, int y );
+  bool isKo( int x, int y );
   int countNeighbors( Player target, int x, int y );
   bool effectEnemies( Player enemy, int x, int y );
-  
   void clearMarks();
   void clearGroup( Player player, int x, int y );
-  
-  
   Group getGroup( int x, int y, Group currGroup );
 };

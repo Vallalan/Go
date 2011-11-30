@@ -8,12 +8,27 @@
  */
 #include "GoBoard.h"
 
+//static variables to hold the count of captured stones
+static int blackPrisoners;
+static int whitePrisoners;
+
+//hold the position of a KO if it exists
+static int koPosX;
+static int koPosY;
+
 //builds a 2d array of stone*
 GoBoard::GoBoard( int width, int height ) 
 {
   //set the board width and height
   this->width = width;
   this->height = height;
+  
+  blackPrisoners = 0;
+  whitePrisoners = 0;
+
+  //set to -1 when there is no KO on the board
+  koPosX = -1;
+  koPosY = -1;
  
   
   //make space for the grid
@@ -42,6 +57,7 @@ GoBoard::~GoBoard()
   
   delete [] grid; //delete the grid
 }
+ 
 
 int GoBoard::step( Player player ) 
 {
@@ -49,8 +65,13 @@ int GoBoard::step( Player player )
   Player Enemy;
   int x, y;
   Stone *currStone;
+  bool KOflag1 = false;
   Group playerGroup;
+ 
   std::string playerName;
+
+ 
+ 
 
   //set player name as string
   if( currPlayer == BLACK ) 
@@ -141,6 +162,17 @@ int GoBoard::step( Player player )
     {
       clearGroup( currPlayer, x, y );
     }
+
+  //Determine if there is not a KO
+  if( playerGroup.liberties != 0 || playerGroup.size != 1 || !KOflag1 )
+    {
+      //The KO positions are set when an enemy is killed,
+      //if a KO is not possible then the positions need to be reset before
+      //the step finishes
+      koPosX = -1;
+      koPosY = -1;
+    }
+  
   
   //clear all our Counted marks
   clearMarks();
@@ -181,10 +213,10 @@ bool GoBoard::isOnBoard( int x, int y )
 */
 bool GoBoard::effectEnemies( Player enemy, int x, int y ) 
 {
-  //test for enemies
+ 
   
   //flags to see if a state of KO may be possible
-  int killSize = 0; //size of last gorup killed, used to test for KO
+  int killSize = 0; //size of last gorup killed, used to test for KO, and scoring
   int numKilled = 0; //groups killed, used to test for KO
 
   //create a group to be reused to test all enemies
@@ -217,8 +249,32 @@ bool GoBoard::effectEnemies( Player enemy, int x, int y )
 		{
 		  //set the killSize when a group is killed
 		  killSize = enemyGroup.size;
+
 		  numKilled += 1;
-		  //set all stones to empty
+		  
+		  //sets the KO position temporarily
+		  //will be cleared in the step function if
+		  //a ko is not present
+		  koPosX = xnew[i];
+		  koPosY = ynew[i];
+		  
+		  switch( enemyGroup.player )
+		    {
+		    case(WHITE):
+		      {
+			blackPrisoners += killSize;
+			break;
+		      }
+		    case(BLACK):
+		      {
+			whitePrisoners += killSize;
+			break;
+		      }
+		    default:
+		      {
+			break;
+		      }
+		    }
 		  clearGroup( enemy, xnew[i], ynew[i] );
 		}
 	    }
@@ -234,7 +290,12 @@ bool GoBoard::effectEnemies( Player enemy, int x, int y )
   return false;
 }
 
+/*
+  Clears a group of stones from the board
 
+  param player: color of the group
+  param x, y: coordinates of a stone within the group
+*/
 void GoBoard::clearGroup( Player player, int x, int y ) 
 {
   //clear the first node
@@ -261,6 +322,9 @@ void GoBoard::clearGroup( Player player, int x, int y )
     }
 }
 
+/*
+  clears all of our counted marks on the board
+*/
 void GoBoard::clearMarks()
 {
 
@@ -274,6 +338,14 @@ void GoBoard::clearMarks()
     }
 }
 
+/*
+  Scores the board according to chinese Area scoring rules
+  -each stone on the board is a point for it's owning player
+  -each empty group that is completely surrounded by just 1 player's
+   stones and board edges has its size scored for that player.
+
+   returns the player who has the higher score
+*/
 Player GoBoard::scoreArea()
 {
   Group currGroup;
@@ -343,6 +415,83 @@ Player GoBoard::scoreArea()
     }
 }
 
+/*
+  Scores the board according to Japanese/Korean Territory scoring rules
+  -each stone captured during the course of the game is added to the
+   capturing players score
+  -each empty group that is completely surrounded by just 1 player's
+   stones and board edges has its size scored for that player.
+   
+   return the player who has the higher score
+*/
+Player GoBoard::scoreTerritory()
+{
+  Group currGroup;
+  int scoreBlack;
+  int scoreWhite;
+  
+  //add each players captured prisoners to their score
+  scoreBlack = blackPrisoners;
+  scoreWhite = whitePrisoners;
+
+  //iterate through the board piece by piece
+  for( int x = 0; x < width; x++ )
+    {
+      for( int y = 0; y < height; y++ )
+	{
+
+	  //reset the group attributes
+	  currGroup.size = 0;
+	  currGroup.liberties = 0;
+	  currGroup.owner = (Player)EMPTY;
+	  currGroup.player = (Player)EMPTY;
+	  
+	  if( grid[x][y]->isPlayer( EMPTY ))
+	    {
+	      //get attributes of the empty territory
+	      currGroup = getGroup( x, y, currGroup );
+
+
+	      //determine 'Ownership' of the empty territory and add the size to that player score
+	      switch( currGroup.owner )
+		{
+		case(BLACK):
+		  {
+		    scoreBlack += currGroup.size;
+		    break;
+		  }
+		case(WHITE):
+		  {
+		    scoreWhite += currGroup.size;
+		    break;
+		  }
+		default:
+		  { break; }
+		}
+	    }
+	}
+    }
+
+  //Determine winner and return that player
+  if( scoreBlack > scoreWhite )
+    {
+      return BLACK;
+    }
+  else if ( scoreWhite > scoreBlack )
+    {
+      return WHITE;
+    }
+  else
+    {
+      return EMPTY;
+    }
+
+}
+
+/*
+  iterates through each stone on the board printing out
+  it's assigned character(its player)
+*/
 void GoBoard::printboard() 
 {
   std::cout << "  0 1 2 3 4 5 6 7 8 9" << std::endl;
@@ -387,6 +536,17 @@ int GoBoard::countNeighbors( Player target, int x, int y )
   return count;
 }
 
+/*
+  core function: recursively traces through every stone that is
+  orthogonally connected starting at stone x,y. as it traverses it counts
+  and updates the attributes Size, Liberties, and Owner, and returns them
+  wrapped in a Group structure
+
+  param x,y: coordinates of a stone within a group
+  param currGroup: a copy of a Group object that holds all attributes
+  
+  returns currGroup after traversing all stones in the group
+*/
 Group GoBoard::getGroup( int x, int y, Group currGroup )
 {
   //coordinates of all neighbor stones
@@ -428,4 +588,52 @@ Group GoBoard::getGroup( int x, int y, Group currGroup )
   std::cout<<"x: "<< x <<" y: "<< y << " lib: "<<countNeighbors( EMPTY, x, y )<<std::endl;
   return currGroup;
 }
+
+/*
+  Wrapper function to allow access to the Stone's isPlayer function
   
+  param x,y: coordinates of the desired stone
+  param target: desired player
+
+  return true if the target is the same as the stones player, else false
+*/
+bool GoBoard::isPlayer( Player target, int x, int y )
+{
+  return grid[x][y]->isPlayer( target );
+}
+ 
+/*
+  determines if a desired position is restricted due to KO
+
+  KO- a state where by playing a stone you return the board to
+      the position it was in the previous turn, this is disallowed
+      by standard rules as it can create an infinite loop of play
+      note that the restriction only stands for a single turn as it
+      forces the player to make a different move and create a different
+      board.
+
+*/
+bool GoBoard::isKo( int x, int y )
+{
+  if( x == koPosX && y == koPosY )
+    {
+      return true;
+    }
+  return false;
+}
+
+/*
+  Determines if the position is available to have a stone placed in it
+
+  param x,y: integer coordinates of the stone to place
+
+  return bool: whether a stone can be placed there
+*/
+bool GoBoard::isValidMove( int x, int y)
+{
+  if( isOnBoard( x, y ) && isPlayer( EMPTY, x, y ) && !isKo( x, y ))
+    {
+      return true;
+    }
+  return false;
+}
