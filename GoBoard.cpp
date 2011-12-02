@@ -13,8 +13,8 @@ static int blackPrisoners;
 static int whitePrisoners;
 
 //hold the position of a KO if it exists
-static int koPosX;
-static int koPosY;
+int koPosX;
+int koPosY;
 
 //builds a 2d array of stone*
 GoBoard::GoBoard( int width, int height ) 
@@ -59,31 +59,16 @@ GoBoard::~GoBoard()
 }
  
 
-int GoBoard::step( Player player ) 
+int GoBoard::step( Player player, int x, int y ) 
 {
   Player currPlayer = player;
   Player Enemy;
-  int x, y;
   Stone *currStone;
   bool KOflag1 = false;
   Group playerGroup;
  
   std::string playerName;
 
- 
- 
-
-  //set player name as string
-  if( currPlayer == BLACK ) 
-    {
-      playerName = "Black";
-    }
-  else
-    {
-      playerName = "White";
-    }
-  
-  std::cout << "It is now " << playerName << "\'s turn" << std::endl;
   if( currPlayer == BLACK ) 
     {
       Enemy = WHITE;
@@ -92,71 +77,25 @@ int GoBoard::step( Player player )
     {
       Enemy = BLACK;
     }
-
-  //get move from user
-  while( 1 )
-    {
-    while( 1 ) 
-      {
-	std::cout << "Please enter the desired column, or enter -1 to pass ";
-	std::cin >> x;
-	if( x == -1 )
-	  {
-	    return -1;
-	  }
-      if( x < 0 || x >= width ) 
-	{
-	  std::cout << "Please enter a valid column " << std::endl;
-	}
-      else 
-	{
-	  break;
-	}
-      }
-    while( 1 ) 
-      {
-	std::cout << "Please enter the desired row, or enter -1 to pass " << std::endl;
-	std::cin >> y;
-      if( y == -1 ) 
-	{
-	  return -1;
-	}
-      if( y < 0 || y >= height ) 
-	{
-	  std::cout << "Please enter a valid row " << std::endl;
-	} 
-      else 
-	{
-	  break;
-	}
-      }
-    if( grid[x][y]->getPlayer() == EMPTY )
-      {
-	currStone = grid[x][y];
-	break;
-      }
-    else
-      {
-	std::cout << "Please enter Col/Row of an empty space." << std::endl;
-      }
-    }
-
+ 
+  currStone = grid[x][y];
   //set piece
-  currStone->setPlayer( currPlayer );
-
-  
-  
-  
+  currStone->setPlayer( currPlayer ); 
 
   //test and possibly kill enemies
-  effectEnemies( Enemy, x, y );
+  KOflag1 = effectEnemies( Enemy, x, y );
 
+  //set the attributes of the group for the current player
   playerGroup.size = 0;
   playerGroup.liberties = 0;
   playerGroup.player = currPlayer;
   playerGroup.owner = (Player)EMPTY;
   playerGroup = getGroup( x, y, playerGroup );
+
+  //Debug message to see if the liberties, size, and owner are counted correctly
   std::cout<<"Size: "<<playerGroup.size<<" Liberties: "<<playerGroup.liberties<<" Player: "<<playerGroup.player<<" Owner: "<<playerGroup.owner<<std::endl;
+
+
   //test if player killed themselves
   if( playerGroup.liberties == 0 )
     {
@@ -164,7 +103,7 @@ int GoBoard::step( Player player )
     }
 
   //Determine if there is not a KO
-  if( playerGroup.liberties != 0 || playerGroup.size != 1 || !KOflag1 )
+  if( playerGroup.liberties != 1 || playerGroup.size != 1 || !KOflag1 )
     {
       //The KO positions are set when an enemy is killed,
       //if a KO is not possible then the positions need to be reset before
@@ -310,10 +249,10 @@ void GoBoard::clearGroup( Player player, int x, int y )
     {
 
       //make sure we don't go outside the board
-      if( xnew[i] >= 0 && xnew[i] < width && ynew[i] >= 0 && ynew[i] < height ) 
+      if( isOnBoard( xnew[i],ynew[i] ))
 	{
 	  //make sure the stone is of the correct player
-	  if( grid[xnew[i]][ynew[i]]->getPlayer() == player )
+	  if( grid[xnew[i]][ynew[i]]->isPlayer( player ))
 	    {
 	      //clear the stone and any stones of the same player attached to it
 	      clearGroup( player, xnew[i], ynew[i] );
@@ -400,6 +339,9 @@ Player GoBoard::scoreArea()
 	}
     }
 
+  std::cout<<"Black's Score "<<scoreBlack<<std::endl;
+  std::cout<<"White's Score "<<scoreWhite<<std::endl;
+
   //find the bigger number
   if( scoreWhite > scoreBlack )
     {
@@ -430,6 +372,8 @@ Player GoBoard::scoreTerritory()
   int scoreBlack;
   int scoreWhite;
   
+  std::cout<<"Black's captured stones "<<blackPrisoners<<std::endl;
+  std::cout<<"White's captured stones "<<whitePrisoners<<std::endl;
   //add each players captured prisoners to their score
   scoreBlack = blackPrisoners;
   scoreWhite = whitePrisoners;
@@ -446,11 +390,11 @@ Player GoBoard::scoreTerritory()
 	  currGroup.owner = (Player)EMPTY;
 	  currGroup.player = (Player)EMPTY;
 	  
-	  if( grid[x][y]->isPlayer( EMPTY ))
+	  if( grid[x][y]->isPlayer( EMPTY ) && !grid[x][y]->isCounted())
 	    {
 	      //get attributes of the empty territory
 	      currGroup = getGroup( x, y, currGroup );
-
+	      std::cout<<"Size: "<<currGroup.size<<" owner: "<<currGroup.owner<<std::endl;
 
 	      //determine 'Ownership' of the empty territory and add the size to that player score
 	      switch( currGroup.owner )
@@ -471,7 +415,10 @@ Player GoBoard::scoreTerritory()
 	    }
 	}
     }
-
+  
+  std::cout<<"Black's Score "<<scoreBlack<<std::endl;
+  std::cout<<"White's Score "<<scoreWhite<<std::endl;
+  
   //Determine winner and return that player
   if( scoreBlack > scoreWhite )
     {
@@ -527,7 +474,7 @@ int GoBoard::countNeighbors( Player target, int x, int y )
     {
       if( isOnBoard( xnew[i], ynew[i] ))
 	{
-	  if( grid[xnew[i]][ynew[i]]->getPlayer() == target)
+	  if( grid[xnew[i]][ynew[i]]->isPlayer(target))
 	    {
 	      count += 1;
 	    }
@@ -585,7 +532,7 @@ Group GoBoard::getGroup( int x, int y, Group currGroup )
 
   currGroup.size += 1;
   currGroup.liberties += countNeighbors( EMPTY, x, y );
-  std::cout<<"x: "<< x <<" y: "<< y << " lib: "<<countNeighbors( EMPTY, x, y )<<std::endl;
+  //std::cout<<"x: "<< x <<" y: "<< y << " lib: "<<countNeighbors( EMPTY, x, y )<<std::endl;
   return currGroup;
 }
 
@@ -637,3 +584,5 @@ bool GoBoard::isValidMove( int x, int y)
     }
   return false;
 }
+
+

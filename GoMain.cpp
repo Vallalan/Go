@@ -19,23 +19,69 @@ int main() {
   //print initial blank board
   board.printboard();
   
+  int x, y;
   //Main game loop
   while(1) {
+
+    //get move from user
+    while(1) {
+      //reset coordinates to a completely invalid value
+      x = -2;
+      y = -2;
+      std::cout<<"It is now Black's turn, \nplease enter desired move - 'column' 'row' or enter -1 for either one to pass."<<std::endl;
+
+      //get coordinate input from user
+      std::cin>>x>>y;
+      
+      //determine if it's a valid move, or if the user has passed, exit the loop
+      if( board.isValidMove( x, y ) || x == -1 || y == -1) {
+	break;
+      }
+      else {
+	std::cout<<"Please enter a valid space"<<std::endl;
+      }
+    }
     
-
-    //perform black's move
-    bMove = board.step(BLACK);
-    board.printboard();
-
+    //
+    if( x!=-1 && y!=-1 ) {
+      //perform black's move
+      bMove = board.step(BLACK, x, y);
+      //reprint the board
+      board.printboard();
+    } else {
+      bMove = -1;
+    }
     //check for 2 passes in a row
     if( bMove == -1 && wMove == -1 ) {
       break;
     }
-    
-    //perform white's move
-    wMove = board.step(WHITE);
-    board.printboard();
-    
+
+    //get move from user
+    while(1) {
+      //reset coordinates to a completely invalid value
+      x = -2;
+      y = -2;
+      std::cout<<"It is now Whites's turn, \nplease enter desired move - 'column' 'row' or enter -1 for either one to pass."<<std::endl;
+
+      //Take the coordinates from user
+      std::cin>>x>>y;
+      
+
+      //determine if it is a valid move, or the user has passed
+      if( board.isValidMove( x, y ) || x == -1 || y == -1) {
+	break;
+      }
+      else {
+	std::cout<<"Please enter a valid space"<<std::endl;
+      }
+    }
+    if( x != -1 && y != -1 ){
+      //perform white's move
+      wMove = board.step(WHITE, x, y);
+      board.printboard();
+    } else {
+      wMove = -1;
+    }
 
     //if both players have passed, skip turn
     if( bMove == -1 && wMove == -1 ) {
@@ -43,7 +89,8 @@ int main() {
     }
   }
 
-  Player winner = board.scoreArea();
+  //determine the winner
+  Player winner = board.scoreTerritory();
 
   switch( winner )
     {

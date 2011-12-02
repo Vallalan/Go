@@ -33,7 +33,7 @@ class GoBoard
   ~GoBoard();
 
   void printboard();
-  int step(Player player);
+  int step(Player player, int x, int y);
   Player scoreArea();
   Player scoreTerritory();
   bool isValidMove( int x, int y );
