@@ -2,7 +2,7 @@
              (Allen Hsia)
      Project: Go
      
-     Description: Assignment for programming languages course
+     Description: 
      Holds and allows access/modification to the data for individual game pieces
  */
 

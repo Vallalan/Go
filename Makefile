@@ -1,22 +1,19 @@
-#Author Alan Gieske & Allen Hsia
-
 CC = g++
 DEBUG = -g
 WARN = -Wall -pedantic -ansi
-STUFLAGS = $(DEBUG) $(WARN)
 
-PARTS_H = Stone.h
-PARTS_SRC = Stone.cpp
 
-GAME_H = $(PARTS_H) GoBoard.h
-GAME_SRC = Stone.cpp GoBoard.cpp GoMain.cpp
+GAME_H = Stone.h GoBoard.h
+GAME_SRC = Stone.cpp GoBoard.cpp
 
-GUI_SRC = gtkTest.cpp
+GUI_H = myarea.h
+GUI_SRC = main.cpp myarea.cpp
 
-Go: $(GAME_H) $(GAME_SRC)
-	$(CC) $(STUFLAGS) -o $@ $(GAME_SRC)
-gui: $(GUI_SRC)
-	$(CC) $(GUI_SRC) -o $@ `pkg-config gtkmm-3.0 --cflags --libs`
+FULLGUI_H = $(GAME_H) $(GUI_H)
+FULLGUI_SRC = $(GAME_SRC) $(GUI_SRC)
 
+
+Go: $(FULLGUI_H) $(FULLGUI_SRC)
+	$(CC) $(FULLGUI_SRC) -o $@ `pkg-config gtkmm-3.0 --cflags --libs`
 clean:
-	rm -f *.o *~ Go gui
+	rm *.o Go *.*~ *~ 

@@ -2,9 +2,12 @@
              (Allen Hsia)
      Project: Go
      
-     Description: Assignment for programming languages course
+     Description: 
      Stone class header
  */
+
+#ifndef STONE_H_
+#define STONE_H_
 
 typedef enum Player_t {
   BLACK = 'B',
@@ -19,7 +22,7 @@ class Stone {
   int x;
   int y;
   Player player;
-  bool Counted; //1 means counted 0 means not counted
+  bool Counted; 
 
  public:
   Stone() {Counted = 0;};
@@ -43,3 +46,5 @@ class Stone {
   int getX();
   int getY();
 };
+
+#endif //STONE_H_
