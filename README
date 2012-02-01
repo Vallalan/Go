@@ -1,14 +1,18 @@
-Group members: Alan Gieske, Allen Hsia
+Ancient Chinese Board Game Go
+http://en.wikipedia.org/wiki/Go_game
 
-Makefile commands:
-"make Go" - builds the console version of the game
-"make gui" - makes a basic gtk window pop up
+Requires gtkmm3.0 w/ cairo library to build.
 
-input a column and row number when prompted, if a group of pieces is completely surrouned orthogonally by enemies it will be deleted
-objective of the game is to control the most territory(Have the most empty pieces surrounded only by pieces of your color).
+currently a very basic gui interface, players alternate selecting where
+to place pieces or to pass, both players must pass (a usual sign of an end of 
+game) in order for the score to display. No board reset is available, and it
+appears the gtk interface is causing memory leaks.
+
+
+Scoring Types: Area Scoring is on by default, can be switched in source in myarea.cpp
 
 Area Scoring: 1 point for each piece on the board, 1 point for each empty space controlled.
 
 Territory Scoring: 1 point for each enemy piece captured, 1 point for each empty space controlled.
 
-Currently the board and pieces interact correctly and Area Type scoring is working correctly, the input is easy to break and cause infinite loops.
+
